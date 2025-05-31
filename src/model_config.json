@@ -21,5 +21,11 @@
     "summary_model": "gemini-2.0-flash-lite",
     "default_prompt": "Generate comprehensive code review for recent development changes focusing on code quality, security, performance, and best practices."
   },
-  "_comment": "Update this file when Google releases new model versions. Aliases allow users to use simple names like 'gemini-2.5-pro' instead of full preview names."
+  "meta_prompt_templates": {
+    "default": {
+      "name": "Comprehensive Code Review Meta-Prompt",
+      "template": "You are an expert software engineer analyzing completed development work. Your task is to generate a meta-prompt for an LLM coding agent to perform thorough code reviews.\n\nCRITICAL: Output ONLY the meta-prompt content. Do not include explanatory text, introductions, or conclusions. Do not say \"Here's the meta-prompt\" or similar. Just output the meta-prompt itself.\n\nANALYZE THE COMPLETED WORK:\n1. **Code Patterns**: What types of changes were made (features, refactoring, bug fixes, architecture)\n2. **Risk Areas**: Security vulnerabilities, performance bottlenecks, architectural debt\n3. **Project Context**: Technology stack, development phase, team constraints\n4. **Quality Gaps**: Testing coverage, documentation, error handling\n5. **Success Patterns**: What was done well that should be reinforced\n6. **Configuration Guidelines**: CLAUDE.md rules, cursor rules, and project-specific coding standards\n\nREFERENCE PROJECT GUIDELINES:\n{configuration_context}\n\nGENERATE A META-PROMPT THAT:\n- Provides specific review criteria based on the project's actual patterns\n- Includes concrete examples from this codebase for context\n- Incorporates the project's CLAUDE.md/cursor rules and coding standards\n- Prioritizes issues based on this project's risk profile and guidelines\n- Gives actionable guidance tailored to this technology stack and team preferences\n- Formats output for maximum developer utility while respecting project conventions\n\nProject context and completed work to analyze:\n{context}\n\nREMEMBER: Output ONLY the meta-prompt content that will be used as user instructions. Start directly with the meta-prompt text."
+    }
+  },
+  "_comment": "Update this file when Google releases new model versions. Aliases allow users to use simple names like 'gemini-2.5-pro' instead of full preview names. Meta-prompt templates provide configurable prompts for generating project-specific code review guidance."
 }

@@ -31,10 +31,9 @@ class TestCoreImports:
         assert hasattr(generate_code_review_context, 'load_model_config')
         
     def test_ai_code_review_imports(self):
-        """Test ai_code_review module imports"""
-        import ai_code_review
-        assert hasattr(ai_code_review, 'main')
-        assert hasattr(ai_code_review, 'generate_ai_review')
+        """Test ai_code_review functionality is available in server"""
+        from server import generate_ai_code_review
+        assert callable(generate_ai_code_review)
 
 class TestPackageStructure:
     """Test basic package structure"""
@@ -46,7 +45,8 @@ class TestPackageStructure:
         # Core source files
         assert (project_root / 'src' / 'server.py').exists()
         assert (project_root / 'src' / 'generate_code_review_context.py').exists()
-        assert (project_root / 'src' / 'ai_code_review.py').exists()
+        # ai_code_review functionality moved to server.py
+        assert (project_root / 'src' / 'server.py').exists()
         assert (project_root / 'src' / 'model_config.json').exists()
         
         # Package configuration

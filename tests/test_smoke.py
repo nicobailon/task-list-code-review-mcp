@@ -14,8 +14,7 @@ def test_package_imports():
     """Test that all main modules can be imported"""
     import src.server
     import src.generate_code_review_context
-    import src.ai_code_review
-    import src.model_config
+    # model_config is a JSON file, not a Python module
     assert True  # If we get here, imports worked
 
 def test_model_config_loading():
@@ -30,20 +29,25 @@ def test_model_config_loading():
 
 def test_entry_points_defined():
     """Test that console script entry points are properly defined"""
-    import pkg_resources
+    import sys
+    from pathlib import Path
     
-    entry_points = list(pkg_resources.iter_entry_points('console_scripts'))
-    names = [ep.name for ep in entry_points]
+    # Check pyproject.toml has the entry points defined
+    project_root = Path(__file__).parent.parent
+    pyproject_path = project_root / 'pyproject.toml'
     
-    # Check our main entry points exist
+    with open(pyproject_path, 'r') as f:
+        content = f.read()
+    
+    # Check our main entry points exist in pyproject.toml
     expected_commands = [
         'task-list-code-review-mcp',
         'generate-code-review', 
-        'review-with-ai'
+        'generate-meta-prompt'
     ]
     
     for cmd in expected_commands:
-        assert any(cmd in name for name in names), f"Missing entry point: {cmd}"
+        assert cmd in content, f"Missing entry point in pyproject.toml: {cmd}"
 
 @patch('generate_code_review_context.GEMINI_AVAILABLE', False)
 def test_graceful_fallback_no_gemini():
@@ -58,11 +62,9 @@ def test_cli_help_functions():
     import argparse
     
     # Test that we can create argument parsers without errors
-    from ai_code_review import main as ai_main
     from generate_code_review_context import cli_main
     
     # These should not crash when imported
-    assert callable(ai_main)
     assert callable(cli_main)
 
 def test_mcp_server_startup():

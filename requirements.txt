@@ -1,2 +1,0 @@
-# This package uses pyproject.toml for dependency management
-# Install with: pip install -e .

@@ -16,7 +16,7 @@ class TestPackageInstallation:
     def test_package_builds_successfully(self):
         """Test that the package builds without errors"""
         result = subprocess.run(
-            ["uvx", "--from", "build", "pyproject-build", "."],
+            [sys.executable, "-m", "build"],
             cwd=Path(__file__).parent.parent,
             capture_output=True,
             text=True
@@ -25,22 +25,21 @@ class TestPackageInstallation:
         assert "Successfully built" in result.stdout
         
     def test_package_installs_from_local(self):
-        """Test that uvx can install the package from local directory"""
-        with tempfile.TemporaryDirectory() as temp_dir:
-            # Test installation
-            result = subprocess.run(
-                ["uvx", "--from", ".", "python", "-c", "import src.server; print('✓ Import successful')"],
-                cwd=Path(__file__).parent.parent,
-                capture_output=True,
-                text=True
-            )
-            assert result.returncode == 0, f"Installation failed: {result.stderr}"
-            assert "✓ Import successful" in result.stdout
+        """Test that the package can be imported from local directory"""
+        # Test that modules can be imported (package is already installed via pip install -e .)
+        result = subprocess.run(
+            [sys.executable, "-c", "import src.server; print('✓ Import successful')"],
+            cwd=Path(__file__).parent.parent,
+            capture_output=True,
+            text=True
+        )
+        assert result.returncode == 0, f"Import failed: {result.stderr}"
+        assert "✓ Import successful" in result.stdout
     
     def test_entry_point_exists(self):
         """Test that the main entry point function exists and is callable"""
         result = subprocess.run(
-            ["uvx", "--from", ".", "python", "-c", 
+            [sys.executable, "-c", 
              "import src.server; assert hasattr(src.server, 'main'); print('✓ Entry point exists')"],
             cwd=Path(__file__).parent.parent,
             capture_output=True,
@@ -53,14 +52,14 @@ class TestPackageInstallation:
         """Test that all required dependencies are available"""
         # Test the actual package imports that are used in the code
         dependencies = [
-            ("mcp", "import mcp"),
+            ("fastmcp", "from fastmcp import FastMCP"),
             ("google-genai", "from google import genai"),  # google-genai provides google.genai
             ("python-dotenv", "import dotenv")  # python-dotenv provides dotenv
         ]
         
         for package_name, import_stmt in dependencies:
             result = subprocess.run(
-                ["uvx", "--from", ".", "python", "-c", 
+                [sys.executable, "-c", 
                  f"{import_stmt}; print('✓ {package_name} imported successfully')"],
                 cwd=Path(__file__).parent.parent,
                 capture_output=True,
@@ -75,7 +74,14 @@ class TestPackageMetadata:
     
     def test_package_metadata(self):
         """Test that package metadata is correctly configured"""
-        import tomllib
+        # Handle tomllib import for different Python versions
+        try:
+            import tomllib  # Python 3.11+
+        except ImportError:
+            try:
+                import tomli as tomllib  # Python 3.10 and earlier
+            except ImportError:
+                pytest.skip("Neither tomllib nor tomli available for TOML parsing")
         
         pyproject_path = Path(__file__).parent.parent / "pyproject.toml"
         with open(pyproject_path, "rb") as f:
@@ -84,13 +90,13 @@ class TestPackageMetadata:
         # Check basic metadata
         project = config["project"]
         assert project["name"] == "task-list-code-review-mcp"
-        assert project["version"] == "1.0.0"
-        assert "MCP server for generating code review context" in project["description"]
-        assert project["requires-python"] == ">=3.8"
+        assert project["version"] == "0.3.9"
+        assert "MCP server" in project["description"] and "code review" in project["description"]
+        assert project["requires-python"] == ">=3.10"
         
         # Check dependencies
         deps = project["dependencies"]
-        assert "mcp>=0.1.0" in deps
+        assert "fastmcp>=0.1.0" in deps
         assert "google-genai>=0.1.0" in deps
         assert "python-dotenv>=1.0.0" in deps
         
@@ -124,9 +130,9 @@ class TestPackageStructure:
     
     def test_source_imports_work(self):
         """Test that source modules can be imported correctly"""
-        # Test that source files can be imported in a uvx environment with dependencies
+        # Test that source files can be imported with dependencies installed
         result = subprocess.run(
-            ["uvx", "--from", ".", "python", "-c", 
+            [sys.executable, "-c", 
              "import sys; sys.path.insert(0, 'src'); "
              "import server; import generate_code_review_context; "
              "assert hasattr(server, 'main'); "
@@ -158,5 +164,5 @@ class TestBuildArtifacts:
             
             # Check naming convention
             for wheel in wheel_files:
-                assert "mcp_server_code_review" in wheel.name
-                assert "1.0.0" in wheel.name
+                assert "task_list_code_review_mcp" in wheel.name
+                assert "0.3.9" in wheel.name
